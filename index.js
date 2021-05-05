@@ -12,8 +12,7 @@ const checkForAvailability = async (pincode, date) => {
         const res = await axios({
             method: 'get',
             url: `https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode=${pincode}&date=${date}`,
-            withCredentials: true,
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            withCredentials: false
         })
         const centers = _.get(res, 'data.centers', [])
         filterCentersAvailability(centers)
