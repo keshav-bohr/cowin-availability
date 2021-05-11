@@ -7,11 +7,19 @@ const sgMail = require('@sendgrid/mail');
 dotenv.config()
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+let timeInterval = 0;
+const pincodesString = process.env.PINCODES;
+const pincodes = pincodesString.split(',')
+timeInterval = !!pincodes.length ? pincodes.length * 5000 : Number.MAX_SAFE_INTEGER
+
 const checkForAvailability = async (pincode, date) => {
     try {
         const res = await axios({
             method: 'get',
-            url: `https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode=${pincode}&date=${date}`
+            url: `https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode=${pincode}&date=${date}`,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
+            }
         })
         const centers = _.get(res, 'data.centers', [])
         filterCentersAvailability(centers)
@@ -27,8 +35,9 @@ const filterCentersAvailability = async (centers) => {
         _.get(center, 'sessions', []).forEach((session) => {
             if (session.available_capacity > 0 && session.min_age_limit === 18) {
                 isAvailable = 1;
-                mailText = `${mailText}\n${session.vaccine} vaccine is available on ${session.date}`
-                console.log(`${session.vaccine} vaccine is available on ${session.date}`)
+                const logText = `${session.vaccine} vaccine is available on ${session.date} at pincode: ${center.pincode}`
+                mailText = `${mailText}\n${logText}`
+                console.log(logText)
             }
         })
     });
@@ -50,5 +59,7 @@ const filterCentersAvailability = async (centers) => {
 }
 
 setInterval(() => {
-    checkForAvailability(process.env.PINCODE, moment().format('DD-MM-YYYY'))
-}, 20000);
+    pincodes.forEach((pincode) => {
+        checkForAvailability(pincode, moment().format('DD-MM-YYYY'))
+    })
+}, timeInterval);
