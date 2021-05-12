@@ -24,7 +24,6 @@ const checkForAvailability = async (pincode, date) => {
         const centers = _.get(res, 'data.centers', [])
         filterCentersAvailability(centers)
     } catch (error) {
-        console.log(error)
         console.log('cowin api not called')
     }
 }
